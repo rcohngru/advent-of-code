@@ -1,68 +1,139 @@
-import numpy as np
+OBSTACLE = '#'
+UP = '^'
+DOWN = 'V'
+LEFT = '<'
+RIGHT = '>'
+
+DELTAS = {
+  UP: (-1, 0),
+  DOWN: (1, 0),
+  RIGHT: (0, 1),
+  LEFT: (0, -1),
+}
+
+ROT = {
+  UP: RIGHT,
+  RIGHT: DOWN,
+  DOWN: LEFT,
+  LEFT: UP,
+}
+
+class Person:
+  def __init__(self, start, dir):
+    # possible dirs: '^', '>', 'V', '<'
+    self.start_row = start[0]
+    self.start_col = start[1]
+    self.start_dir = dir
+
+    self.loc = start
+    self.dir = dir
+
+    self.visited_locations = {
+      (self.start_row, self.start_col): set(self.start_dir)
+    }
+
+    self.in_bounds = True
+
+  def move(self, G):
+    next_loc = self.next_spot(self.loc, self.dir)
+    if G.is_obstacle(next_loc):
+      self.dir = ROT[self.dir]
+
+    else:
+      self.loc = next_loc
+
+    if not G.in_bounds(self.loc):
+      self.in_bounds = False
+    else:
+      self.update_visited_locations()
+
+    return
+
+  def next_spot(self, loc, dir):
+    row = loc[0]
+    col = loc[1]
+
+    row_delta, col_delta = DELTAS[dir]
+
+    return (row + row_delta, col + col_delta)
+
+  def update_visited_locations(self):
+    if self.loc not in self.visited_locations:
+      self.visited_locations[self.loc] = set(self.dir)
+    else:
+      self.visited_locations[self.loc].add(self.dir)
+
+  def __repr__(self):
+    s = ""
+    s += f"Current Loc: {self.loc}, {self.dir}"
+    return s
+
+
+class Grid:
+  def __init__(self, M):
+    self.rows = len(M) - 1
+    self.cols = len(M[0]) - 1
+    self.grid = M.copy()
+
+  def in_bounds(self, loc):
+    row = loc[0]
+    col = loc[1]
+
+    if 0 <= row <= self.rows and 0 <= col <= self.cols:
+      return True
+    else:
+      return False
+
+  def is_obstacle(self, loc):
+    row = loc[0]
+    col = loc[1]
+    if not self.in_bounds(loc):
+      return False
+
+    spot = self.grid[row][col]
+    if spot == OBSTACLE:
+      return True
+    else:
+      return False
+
+  def __repr__(self):
+    s = f"{(self.rows, self.cols)}\n"
+    for i in range(self.rows):
+      s+= "".join(self.grid[i]) + "\n"
+
+    return s
 
 def main():
-  global M
-  M = parse_input()
+  start, M = parse_input()
 
-  dir = (-1, 0)
-  loc = np.where(M == '^')
-  loc = (int(loc[0][0]), int(loc[1][0]))
+  P = Person(start, UP)
+  G = Grid(M)
+  print(G)
 
-  while not off_map(loc):
-    M[loc[0], loc[1]] = 'X'
-    loc, dir = move(loc, dir)
+  while P.in_bounds:
+    P.move(G)
 
-  print(np.count_nonzero(M == 'X'))
+  print(len(P.visited_locations.keys()))
 
-def move(loc, dir):
-
-  # bad
-  while True:
-    next_loc = (loc[0] + dir[0], loc[1] + dir[1])
-    if moveable_spot(next_loc):
-      break
-    else:
-      dir = rot90(dir)
-
-  return next_loc, dir
-
-def off_map(loc):
-  mins = (0, 0)
-  maxes = M.shape
-
-  if mins[0] <= loc[0] < maxes[0] and mins[1] <= loc[1] < maxes[1]:
-    return False
-  else:
-    return True
-
-def moveable_spot(loc):
-  if off_map(loc):
-    return True
-
-  if M[loc[0], loc[1]] == '#':
-    return False
-  else:
-    return True
-
-def rot90(dir):
-  if dir == (-1, 0):
-    return (0, 1)
-  if dir == (0, 1):
-    return (1, 0)
-  if dir == (1, 0):
-    return (0, -1)
-  if dir ==(0, -1):
-    return (-1, 0)
 
 def parse_input():
   with open("input.txt", "r") as f:
     lines = f.readlines()
 
   M = []
-  for line in lines:
-    M.append([c for c in line.strip()])
+  start = None
+  for i in range(len(lines)):
+    m = []
+    for j in range(len(lines)):
+      spot = lines[i][j]
+      if spot == '^':
+        start = (i, j)
+      m.append(spot)
+    M.append(m)
 
-  return np.array(M)
+  return start, M
 
 if __name__ == "__main__":
   main()
+
+
