@@ -33,24 +33,65 @@ def main():
             if region not in regions:
                 regions[region] = {
                     "area": 0,
-                    "perimeter": 0
+                    "edges": {
+                        "left": [],
+                        "right": [],
+                        "up": [],
+                        "down": []
+                    }
                 }
 
-            outside_edges = 0
             for dir in DIRS:
                 valid, spot = adj((row, col), dir)
                 if not valid:
-                    outside_edges += 1
+                    regions[region]["edges"][dir].append((row, col))
                 elif valid and R[spot[0]][spot[1]] != region:
-                    outside_edges += 1
+                    regions[region]["edges"][dir].append((row, col))
+
 
             regions[region]["area"] += 1
-            regions[region]["perimeter"] += outside_edges
+            # regions[region]["perimeter"] += outside_edges
 
     tot = 0
     for region, metrics in regions.items():
-        tot += metrics["area"] * metrics ["perimeter"]
+        sides = 0
+        sides += parse_vertical(metrics["edges"]["left"])
+        sides += parse_vertical(metrics["edges"]["right"])
+        sides += parse_horizontal(metrics["edges"]["up"])
+        sides += parse_horizontal(metrics["edges"]["down"])
+
+        tot += metrics["area"] * sides
     print(tot)
+
+def parse_horizontal(nodes):
+    nodes = sorted(nodes, key = lambda tup: (tup[0], tup[1]))
+    sides = 1
+    for i in range(1, len(nodes)):
+        curr = nodes[i]
+        prior = nodes[i - 1]
+        if curr[0] != prior[0]:
+            sides += 1
+            continue
+        if curr[1] - prior[1] > 1:
+            sides += 1
+            continue
+
+    return sides
+
+def parse_vertical(nodes):
+    nodes = sorted(nodes, key = lambda tup: (tup[1], tup[0]))
+    sides = 1
+    for i in range(1, len(nodes)):
+        curr = nodes[i]
+        prior = nodes[i - 1]
+        if curr[1] != prior[1]:
+          sides += 1
+          continue
+        if curr[0] - prior[0] > 1:
+            sides += 1
+            continue
+
+    return sides
 
 def disp_matrix(M):
     for m in M:
