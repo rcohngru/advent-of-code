@@ -25,6 +25,17 @@ BOX_RIGHT = "]"
 WALL = "#"
 EMPTY = '.'
 
+"""
+The move functionality here is really messy and could use some work.
+
+But the basic idea works similar to the method from part 1. I kind of
+cheat a little bit by using a deep copy of the state when recursing to check
+the box movements up and down, but I'm too lazy to think through an
+actual solve.
+
+"""
+
+
 class Warehouse:
   def __init__(self, state, robot_position):
     self.initial_state = state
